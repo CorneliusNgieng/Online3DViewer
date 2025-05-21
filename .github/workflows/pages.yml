@@ -2,25 +2,32 @@ name: Build & Deploy Online3DViewer
 
 on:
   push:
-    branches: [master] # or 'main' – match your default branch
-  workflow_dispatch: # lets you trigger it manually from the UI
+    branches: [master] # adjust if your default branch is "main"
+  workflow_dispatch: # manual trigger
 
 permissions:
   contents: read
   pages: write
-  id-token: write
+  id-token: write # needed for OIDC deploy
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Configure Pages # optional but future-proof
+        uses: actions/configure-pages@v5
+
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
+
       - run: npm ci
       - run: npm run build_website
-      - uses: actions/upload-pages-artifact@v2
-        with: { path: build/website }
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/website # <- must point to your built site
 
   deploy:
     needs: build
@@ -30,4 +37,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
